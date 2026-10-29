@@ -1,0 +1,6 @@
+extends: occurrence
+message: 'Keep the page summary to 160 characters or fewer.'
+level: error
+scope: frontmatter.summary
+max: 160
+token: '.'

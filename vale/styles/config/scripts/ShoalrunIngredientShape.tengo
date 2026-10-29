@@ -1,0 +1,94 @@
+text := import("text")
+matches := []
+headers := text.re_find("(?s)^---\\r?\\n(.*?)\\r?\\n---(?:\\r?\\n|$)", scope, 1)
+if headers {
+    header := headers[0][1].text
+    types := text.re_find("(?m)^type:[ \\t]*[\"']?([a-z-]+)", header, 1)
+    if types && types[0][1].text == "ingredient" {
+        offset := headers[0][0].end
+        sections := []
+        current := {name: "", begin: offset, end: offset, content: false}
+        fenced := false
+        marker := ""
+        width := 0
+        // Only real level-two headings define sections. Fenced examples remain content.
+        for line in text.split_after(text.substr(scope, offset, len(scope)), "\n") {
+            trimmed := text.trim_space(line)
+            fences := text.re_find("^(`{3,}|~{3,})", trimmed, 1)
+            if fences {
+                token := fences[0][1].text
+                char := text.substr(token, 0, 1)
+                if !fenced {
+                    fenced = true
+                    marker = char
+                    width = len(token)
+                } else if char == marker && len(token) >= width && text.trim_space(text.substr(trimmed, len(token), len(trimmed))) == "" {
+                    fenced = false
+                }
+            } else if !fenced && text.has_prefix(trimmed, "## ") {
+                sections = append(sections, current)
+                start := offset + text.index(line, "## ")
+                current = {name: text.to_lower(text.trim_space(text.trim_suffix(text.trim_space(text.trim_prefix(trimmed, "## ")), " ##"))), begin: start, end: start + len(text.trim_space(line)), content: false}
+            } else if trimmed != "" && !text.re_match("^(?:#{1,6} |<!--.*-->$|<RelatedReading[^>]*>)", trimmed) {
+                current.content = true
+            }
+            offset += len(line)
+        }
+        sections = append(sections, current)
+        anchor := {begin: headers[0][1].begin + types[0][0].begin, end: headers[0][1].begin + types[0][0].end}
+
+        // YAML semantics are validated by Shoalrun; do not parse YAML with regex.
+        // Compact ingredients may declare their handoffs in workflow frontmatter.
+        workflows := text.re_find("(?m)^workflow:[^\\r\\n]*(?:\\r?\\n(?:[ \\t]+[^\\r\\n]*|[ \\t]*))*", header, 1)
+        workflow := false
+        if workflows { workflow = true }
+        if workflow {
+            // Detect the check field in conventional block or flow mappings.
+            // Its YAML type/value and handoff semantics belong to recipe draft.
+            checks := text.re_find("(?m)(?:^|[,{])[ \\t]*[\"']?check[\"']?[ \\t]*:[ \\t]*([^\\r\\n,}]*)", workflows[0][0].text, 1)
+            hasCheck := false
+            if checks {
+                value := text.trim_space(checks[0][1].text)
+                hasCheck = value != "" && value != "\"\"" && value != "''" && value != "null" && value != "~" && !text.has_prefix(value, "#")
+            }
+            if !hasCheck {
+                start := headers[0][1].begin + workflows[0][0].begin
+                matches = append(matches, {begin: start, end: start + 9, message: "Declare workflow.check with an observable ingredient success condition, or use the section-based ingredient shape."})
+            }
+            content := false
+            for section in sections {
+                if section.content { content = true }
+            }
+            if !content {
+                matches = append(matches, {begin: anchor.begin, end: anchor.end, message: "Add the ingredient's action or check to its body; workflow metadata alone is not a reader instruction."})
+            }
+        } else {
+            inputs := false
+            action := false
+            output := false
+            check := false
+            for section in sections {
+                role := ""
+                if section.name == "inputs" {
+                    inputs = true
+                    role = "inputs"
+                } else if text.re_match("^(action|do it)$", section.name) {
+                    action = true
+                    role = "action"
+                } else if text.re_match("^outputs?$", section.name) {
+                    output = true
+                    role = "output"
+                } else if text.re_match("^(check (?:it worked|the (?:outcome|result))|verify the (?:outcome|result))$", section.name) {
+                    check = true
+                    role = "success check"
+                }
+                if role != "" && !section.content {
+                    matches = append(matches, {begin: section.begin, end: section.end, message: "Fill the ingredient's " + role + " section; state None explicitly when it needs no input or produces no handoff value."})
+                }
+            }
+            if !inputs || !action || !output || !check {
+                matches = append(matches, {begin: anchor.begin, end: anchor.end, message: "Use nonempty Inputs, Action (or Do it), Output, and Check it worked sections, or declare workflow handoffs in frontmatter and write the action in the body."})
+            }
+        }
+    }
+}

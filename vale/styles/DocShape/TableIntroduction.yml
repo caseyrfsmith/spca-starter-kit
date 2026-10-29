@@ -1,0 +1,5 @@
+extends: script
+message: 'Add a sentence explaining the table between the heading and the table.'
+level: error
+scope: raw
+script: ShoalrunTableIntroduction.tengo

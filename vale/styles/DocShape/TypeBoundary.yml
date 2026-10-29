@@ -1,0 +1,5 @@
+extends: script
+message: 'Review whether this section serves the page type.'
+level: warning
+scope: raw
+script: ShoalrunTypeBoundary.tengo

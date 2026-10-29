@@ -1,0 +1,6 @@
+extends: occurrence
+message: 'Keep the page title to 60 characters or fewer.'
+level: error
+scope: frontmatter.title
+max: 60
+token: '.'

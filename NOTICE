@@ -1,0 +1,12 @@
+SPCA Starter Kit
+Copyright 2026 CT Smith
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+
+Includes Shoalrun DocShape rules and Tengo scripts, distributed under
+Apache-2.0. Their source, attribution and license are preserved in
+vale/DocShape-NOTICE.md and vale/DocShape-LICENSE.txt.
+
+Optional JavaScript dependencies are declared in package.json and its
+lockfile; dependency code is not bundled. Preserve their license notices
+when redistributing installed dependencies.

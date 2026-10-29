@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+work/
+.claude/settings.json
+.claude/settings.local.json
+.codex/hooks.json
+.spca-receipts/
+node_modules/
+
+# Build artifacts and local configuration
+dist/
+.DS_Store
+.env
+.env.*
+!.env.example

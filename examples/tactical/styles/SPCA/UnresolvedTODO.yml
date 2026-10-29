@@ -1,0 +1,6 @@
+extends: existence
+message: 'Resolve the TODO before release.'
+level: error
+scope: raw
+raw:
+  - '\[\[TODO:[^\]]+\]\]'

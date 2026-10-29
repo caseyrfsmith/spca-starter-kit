@@ -1,0 +1,98 @@
+[
+  {
+    "id": "FM-001",
+    "file": "snippets/FM-001.md",
+    "source": "content/fm-001.mdx",
+    "kind": "illustrative-snippets",
+    "blocks": 1,
+    "blockSha256": [
+      "fb992071cdaa269cbcaa56bfa01bd396f26036d5424f93996210004d3cd64967"
+    ],
+    "sha256": "da92db308cda19bb0b87290dfbecdd2e64403d802dc48d709fbb06f55ef5fbff"
+  },
+  {
+    "id": "FM-003",
+    "file": "snippets/FM-003.md",
+    "source": "content/fm-003.mdx",
+    "kind": "illustrative-snippets",
+    "blocks": 1,
+    "blockSha256": [
+      "48aae5e7ff5713f33574b828a58caaa955a7f9dbb30f774e50403ba750e4d852"
+    ],
+    "sha256": "79d114dbc804b6cee1b452e4745340964425693a97f53f15f511b82e3f884e3d"
+  },
+  {
+    "id": "SLOPCON-ASSESSMENT",
+    "file": "snippets/SLOPCON-ASSESSMENT.md",
+    "source": "content/slopcon-assessment.mdx",
+    "kind": "illustrative-snippets",
+    "blocks": 1,
+    "blockSha256": [
+      "79120208f3835b6fe631c248eeaed217f213660af2d949daa0f204e466c466a5"
+    ],
+    "sha256": "3c7dde4f6e5aa0a8cd97fbdd0a985a64fccdff16d5b4349e4b2ae8fd4fcec638"
+  },
+  {
+    "id": "TG-001",
+    "file": "snippets/TG-001.md",
+    "source": "components/tactical/guides.json#TG-001",
+    "kind": "illustrative-snippets",
+    "blocks": 1,
+    "blockSha256": [
+      "747ec53613fbbd6c5c65d3e54229531e5f724761f639b8ae7d7601beb328b8c3"
+    ],
+    "sha256": "1d674b3bf6b84bb21a783e7ea5bd09301677ff829adca4ddc5216cde15d953e9"
+  },
+  {
+    "id": "TG-002",
+    "file": "snippets/TG-002.md",
+    "source": "components/tactical/guides.json#TG-002",
+    "kind": "illustrative-snippets",
+    "blocks": 4,
+    "blockSha256": [
+      "2cc5241254f44ee37ebd129c26c13c5c6e40a303400c3f8535ed938e4a28484a",
+      "56b7b968edda2c6d8643806e938584a5c3c6b3d7decf8814337eeb55894e3827",
+      "47926bd8aa77833ab853818abb119c3205aa48fcf0b94153bc9d9348a3d75817",
+      "cd7a6c7f8ddccfc83b492336d42912133d7709eba9eb56298f824aa8793ba9c0"
+    ],
+    "sha256": "e9c4831ab80cd2dcc7a9b1fa32c1b543ed0d9bb442085bae87a6421ef5732abc"
+  },
+  {
+    "id": "TG-004",
+    "file": "snippets/TG-004.md",
+    "source": "content/tg-004.mdx",
+    "kind": "illustrative-snippets",
+    "blocks": 2,
+    "blockSha256": [
+      "38c4b08cd11ba31ba2281f8b660ca523c8242e6ad26694cc86792b312790f485",
+      "d15e3a89977b3b994b23cc02be8074ab32c3fcb2d0995e92a06479771889b1df"
+    ],
+    "sha256": "d3fa6379cb1ebcf6711aabfa907108ab5675afc25d3b9ca62cb722e0a842f00d"
+  },
+  {
+    "id": "TG-005",
+    "file": "snippets/TG-005.md",
+    "source": "content/tg-005.mdx",
+    "kind": "illustrative-snippets",
+    "blocks": 3,
+    "blockSha256": [
+      "3d734c1e80de6b94934c20fbc4b5dca71414994a1afc01c1114d6a4d6ccdb893",
+      "d4c8f201ddc376948f7e65cc1dfebe7d07c3d1b1aab3edc7ea24f0d0a24b191f",
+      "84f08219688ec3283f9bf6dffa93d312aef14875909e12e71a9edccc894bf7a1"
+    ],
+    "sha256": "7a0c497363bb9f85fbfe73e7f07bfd9e16a8a6fc70f9b99b3c3f4d515d0796e7"
+  },
+  {
+    "id": "TG-006",
+    "file": "snippets/TG-006.md",
+    "source": "content/tg-006.mdx",
+    "kind": "illustrative-snippets",
+    "blocks": 3,
+    "blockSha256": [
+      "9e79f5618213354d89cc567a4ddd9cfcda8a9990b2aff0004c02a835c1e3898a",
+      "5404b782d389d1f9226cd03abe37b39da37b31b712b91210b3fa08a63b67156b",
+      "bddb29aebb76d780e1bdb1bcb680c353eb41667c9110c3dfd9432677492c8198"
+    ],
+    "sha256": "548087207016acff06de461cc17ae3a4bb3ed34c7758fbe207ffe84edf49b6a0"
+  }
+]

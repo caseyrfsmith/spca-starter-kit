@@ -1,0 +1,18 @@
+{
+  "description": "Optional SPCA draft feedback; review and trust before enabling.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "^(Bash|apply_patch|Write|Edit)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .codex/check-ticket-hook.py",
+            "timeout": 10,
+            "statusMessage": "Checking SPCA ticket drafts"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "hooks": {
+    "PostToolUse": [{
+      "matcher": "Edit|Write",
+      "hooks": [{"type":"command","command":"node \"$CLAUDE_PROJECT_DIR/examples/tactical/vale-hook.mjs\"","timeout":15}]
+    }]
+  }
+}

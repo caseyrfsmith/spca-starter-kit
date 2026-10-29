@@ -1,0 +1,5 @@
+extends: script
+message: 'Check the page structure.'
+level: error
+scope: raw
+script: ShoalrunStructure.tengo

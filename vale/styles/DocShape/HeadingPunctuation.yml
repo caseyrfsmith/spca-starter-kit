@@ -1,0 +1,7 @@
+extends: existence
+message: 'Remove the trailing punctuation from this heading.'
+level: error
+scope: heading
+nonword: true
+tokens:
+  - '[.:;]$'

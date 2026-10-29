@@ -1,0 +1,9 @@
+extends: existence
+message: "Avoid generic filler: '%s'. State the actual task or outcome."
+level: warning
+ignorecase: true
+tokens:
+  - 'delve into'
+  - 'in today.s fast.paced world'
+  - 'unlock the power of'
+  - 'seamlessly leverage'

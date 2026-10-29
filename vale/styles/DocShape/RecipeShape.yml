@@ -1,0 +1,5 @@
+extends: script
+message: 'Check the recipe structure.'
+level: error
+scope: raw
+script: ShoalrunRecipeShape.tengo

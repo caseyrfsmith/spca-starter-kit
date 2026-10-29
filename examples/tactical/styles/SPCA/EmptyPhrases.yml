@@ -1,0 +1,7 @@
+extends: existence
+message: 'Replace the stock phrase with task-specific information.'
+level: warning
+ignorecase: true
+tokens:
+  - 'in today.s fast.paced world'
+  - 'it is important to note that'

@@ -1,0 +1,29 @@
+text := import("text")
+matches := []
+headers := text.re_find("(?s)^---\\r?\\n(.*?)\\r?\\n---(?:\\r?\\n|$)", scope, 1)
+if headers {
+    header := headers[0][1].text
+    offset := headers[0][0].end
+    updated := text.re_find("(?m)^updated:[^\\r\\n]*", header, 1)
+    if !updated {
+        matches = append(matches, {begin: 0, end: 3, message: "Add updated: YYYY-MM-DD to page frontmatter; refresh it when editing the page."})
+    } else if !text.re_match("^updated:[ \\t]*[\"']?\\d{4}-\\d{2}-\\d{2}[\"']?[ \\t]*(?:#.*)?$", updated[0][0].text) {
+        start := headers[0][1].begin + updated[0][0].begin
+        matches = append(matches, {begin: start, end: start + len(updated[0][0].text), message: "Use YYYY-MM-DD for updated; preserve the original date field."})
+    }
+
+    // Landing pages and collection overviews can start with composed content.
+    if !text.re_match("(?m)^(?:type:[ \\t]*[\"']?overview|layout:[ \\t]*[\"']?(?:landing|splash))", header) {
+        body := text.substr(scope, offset, len(scope))
+        // A top-level introduction precedes the first blank line or heading.
+        intro := text.re_find("(?s)^\\s*(\\S.*?)(?:\\r?\\n[ \\t]*\\r?\\n|$)", body, 1)
+        if intro {
+            paragraph := intro[0][1]
+            if text.re_match("^(?:#{1,6}[ \\t]|```|~~~|[-*][ \\t]|[0-9]+\\.[ \\t])", paragraph.text) {
+                matches = append(matches, {begin: offset + paragraph.begin, end: offset + paragraph.end, message: "Start with a short introductory paragraph before headings, lists, or code."})
+            } else if len(text.fields(paragraph.text)) > 150 {
+                matches = append(matches, {begin: offset + paragraph.begin, end: offset + paragraph.end, message: "Keep the introduction to 150 words or fewer; move detail into the main sections."})
+            }
+        }
+    }
+}

@@ -1,0 +1,66 @@
+text := import("text")
+matches := []
+headers := text.re_find("(?s)^---\\r?\\n(.*?)\\r?\\n---(?:\\r?\\n|$)", scope, 1)
+if headers {
+    header := headers[0][1].text
+    types := text.re_find("(?m)^type:[ \\t]*[\"']?([a-z-]+)", header, 1)
+    if types && types[0][1].text == "recipe" {
+        offset := headers[0][0].end
+        sections := []
+        current := {name: "", begin: offset, end: offset, content: false}
+        fenced := false
+        marker := ""
+        width := 0
+        // Only real level-two headings define sections. Fenced examples remain content.
+        for line in text.split_after(text.substr(scope, offset, len(scope)), "\n") {
+            trimmed := text.trim_space(line)
+            fences := text.re_find("^(`{3,}|~{3,})", trimmed, 1)
+            if fences {
+                token := fences[0][1].text
+                char := text.substr(token, 0, 1)
+                if !fenced {
+                    fenced = true
+                    marker = char
+                    width = len(token)
+                } else if char == marker && len(token) >= width && text.trim_space(text.substr(trimmed, len(token), len(trimmed))) == "" {
+                    fenced = false
+                }
+            } else if !fenced && text.has_prefix(trimmed, "## ") {
+                sections = append(sections, current)
+                start := offset + text.index(line, "## ")
+                current = {name: text.to_lower(text.trim_space(text.trim_suffix(text.trim_space(text.trim_prefix(trimmed, "## ")), " ##"))), begin: start, end: start + len(text.trim_space(line)), content: false}
+            } else if trimmed != "" && !text.re_match("^(?:#{1,6} |<!--.*-->$|<RelatedReading[^>]*>)", trimmed) {
+                current.content = true
+            }
+            offset += len(line)
+        }
+        sections = append(sections, current)
+        anchor := {begin: headers[0][1].begin + types[0][0].begin, end: headers[0][1].begin + types[0][0].end}
+
+        setup := false
+        check := false
+        action := false
+        for section in sections {
+            role := ""
+            if text.re_match("^(before you (?:start|begin)|prerequisites|what you need)$", section.name) {
+                setup = true
+                role = "setup"
+            } else if text.re_match("^(check (?:it worked|the (?:outcome|result))|verify the (?:outcome|result))$", section.name) {
+                check = true
+                role = "success check"
+            } else if section.name != "" && !text.re_match("^(ingredients|inputs|outputs?|related reading|next steps|if it fails|handle common failures|html, markdown, and agents)$", section.name) && section.content {
+                action = true
+            }
+            if role != "" && !section.content {
+                matches = append(matches, {begin: section.begin, end: section.end, message: "Fill the recipe's " + role + " section. State the required starting conditions or the observable end-to-end success condition."})
+            }
+        }
+        missing := []
+        if !setup { missing = append(missing, "setup (Before you start or Prerequisites)") }
+        if !action { missing = append(missing, "actions (Do it or task-specific headings)") }
+        if !check { missing = append(missing, "a success check (Check it worked or Check the outcome)") }
+        if len(missing) > 0 {
+            matches = append(matches, {begin: anchor.begin, end: anchor.end, message: "Add nonempty recipe sections for " + text.join(missing, "; ") + "."})
+        }
+    }
+}

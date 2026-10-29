@@ -1,0 +1,7 @@
+extends: existence
+message: 'Start body headings at level 2; Shoalrun renders the title from frontmatter.'
+level: error
+scope: heading.h1
+nonword: true
+tokens:
+  - '.+'
