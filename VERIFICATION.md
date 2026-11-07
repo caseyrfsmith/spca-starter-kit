@@ -41,7 +41,7 @@ The ten provided tests and ten integration/boundary tests pass (20 total). CRLF/
 - TODO and filler scanning deliberately includes code. The Vale rules needed no syntax correction and remain illustrative; the Python validator's TODO match is case-insensitive, while the supplied Vale TODO rule matches uppercase TODO.
 - Shared hook code resolves Claude relative paths from the event cwd and constrains reads to the kit's examples/work directories. Codex scans only the bounded work directory rather than assuming Claude's file_path input. Symlink escapes are ignored. The installed kit directory is the scope boundary; this is not a security sandbox.
 - PostToolUse cannot roll back a completed edit. Disabled hooks, unsupported tool paths, external edits and incomplete draft discovery can bypass feedback. Use the explicit validator and required CI on your real ticket corpus. The included CI only checks examples and tests; adapt it to check actual submitted ticket files.
-- Neither linting nor structural validity proves usefulness, correctness, testability, or successful product behavior. Human review and product evidence remain necessary. No Linear connection, Shoalrun runtime, credentials, model API client or live product integration is included.
+- Neither linting nor structural validity proves usefulness, correctness, testability, or successful product behavior. Human review and product evidence remain necessary. No Linear connection, Shoalrun runtime, credentials or live product integration is included. The decision-gates example is an optional, provider-neutral adapter that reads a provider key from the environment.
 
 Official adapter contracts reviewed: [Claude Code hooks](https://code.claude.com/docs/en/hooks), [Codex hooks](https://learn.chatgpt.com/docs/hooks). Current source documentation does not establish runtime compatibility on every installed agent version.
 
@@ -57,6 +57,16 @@ The same matching command in project `hooks.json`, and then in project `config.t
 Claude Code 2.1.312 again exited 1 with `authentication_failed` / Not logged in before any Write call. Live Claude invalid/valid/outside-scope dispatch remains blocked by authentication; no credentials were accessed or changed.
 
 The parent SPCA repository contains exact invocation records, agent events, hook audit and an opt-in reproduction script under `editorial/hook-verification/`. These logs use illustrative local ticket fixtures, not real product evidence. No hooks were activated in the maintained toolkit or SPCA project.
+
+## Decision-gates example and operator loop — 2026-11-07
+
+Added `examples/decision-gates/`: four typed decision gates, a deterministic-then-gates pipeline, a diagnoser, a calibration harness, and an operator loop. The JavaScript suite in that directory passes 128 tests offline (`cd examples/decision-gates && npm test`), with no network and no key. The tests use injected providers, a mock `fetch` for the Linear adapter and an injected runner for the git adapter.
+
+- The git/`gh` adapter (`src/adapters/git.mjs`) is mock-tested: its command plan is checked in unit tests and exercised through `--dry-run`, not against a real push.
+- The Linear adapter (`src/adapters/linear.mjs`) is mock-tested in CI, and its write-back was verified against a real workspace on 2026-11-07 with `bin/live-linear.mjs`: read-only against SLO-10 (auth, `issue(id:)` by identifier, team/state/label resolution) and `--apply` against scratch tickets (a conflicting `gate-review` label cleared, `gate-passed` applied, state moved, comment posted, attachment created, read back). The team ID the adapter read matched the MCP server's, as a cross-check. The live run caught a defect the mocks missed — Linear rejects removing a label the issue does not carry — now fixed by clearing only labels the ticket has. This is one workspace and a few runs, not a general guarantee.
+- Pre-merge review fixes applied: `evaluate` counts a blocked `pass` (`escalate`/`stop`) as a false rejection; a missing or non-numeric confidence is treated as zero, not as confident, and an out-of-range confidence is rejected; `answerable` implements the documented `reviseAt` band via `routeBand`; the phantom `review` route was removed from the diagnoser and the queue view; `--comment-only` and `--require` handle the non-pass and missing-value cases.
+- Final security review: no blockers. Hardening applied: provider base URLs must be `https` (plain `http` only for loopback); git branch and base names are validated against git's ref-name rules; the editorial adaptation helper uses literal replacements so a `$` in source text is never read as a pattern; the `SPCA.AmericanEnglish` rule covers inflections.
+- The operator loop was run once against a real Linear issue (SLO-10) with a live decision provider, opening a PR in each repository. That single run is an illustration, not a benchmark or a calibration result.
 
 ## Bundled guide examples
 

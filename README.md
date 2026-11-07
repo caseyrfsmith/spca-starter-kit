@@ -4,7 +4,7 @@ Standalone tools and examples from SPCA, maintained independently of the SPCA we
 
 **Status: Editorial draft.** Review before adopting; see VERIFICATION.md for tested scope and limitations.
 
-**Purpose:** Templates, prose and page-shape checks, optional agent hooks, and tactical-guide examples to adapt to your workflow. Start with the examples index to choose between runnable examples and illustrative snippets. It does **not** connect to Linear, require Shoalrun, or use model APIs.
+**Purpose:** Templates, prose and page-shape checks, optional agent hooks, decision gates, and tactical-guide examples to adapt to your workflow. Start with the examples index to choose between runnable examples and illustrative snippets. It does **not** require Shoalrun. The decision-gates example uses a model API only when you supply a provider key and an evaluated dataset, and its optional operator loop writes back to a tracker and opens a pull request only when you pass the flags; the rest of the kit makes no network calls.
 
 ## Use it with an agent
 
@@ -63,9 +63,9 @@ Review `.claude/settings.example.json` and `.claude/check-ticket-hook.py`. Copy 
 
 ## What this kit intentionally does not do
 
-- No automatic ticket submission, MCP integration, external API access, or secret handling.
+- No automatic ticket submission or MCP integration. The decision-gates example ships an optional, off-by-default operator loop that reads a provider key and, only when you pass `--tracker`/`--pr`, writes back through a tracker API and opens a pull request with `gh`; it never stores credentials. The Linear adapter is mock-tested and was live-verified once against a scratch issue; the git adapter is exercised through `--dry-run`. Verify both against your own account and repository before relying on them.
 - No pretend fixture factory or fake sandbox responses.
-- No probabilistic decision-model integration without an evaluated dataset.
+- The decision-gates example ships a labeled dataset and a calibration harness; no probabilistic decision-model integration is included without one.
 - No claim that a simple regex can assess whether acceptance criteria are meaningful.
 
 ## Further inspiration
@@ -121,4 +121,4 @@ python3 tools/check_vale.py
 python3 scripts/package.py
 ```
 
-Optional JavaScript dependencies and tests are documented in examples/tactical/README.md. Packaging writes dist/spca-starter-kit.zip and a SHA-256 file. It excludes activated agent settings, working drafts, mock receipts, caches and installed dependencies. No website checkout or model API is required.
+Optional JavaScript dependencies and tests are documented in examples/tactical/README.md. Packaging writes dist/spca-starter-kit.zip and a SHA-256 file. It excludes activated agent settings, working drafts, mock receipts, caches and installed dependencies. No website checkout is required, and no model API is used unless you run the decision-gates example with your own key.
