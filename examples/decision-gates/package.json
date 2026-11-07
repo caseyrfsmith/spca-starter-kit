@@ -1,0 +1,20 @@
+{
+  "name": "spca-decision-gates-example",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "A runnable decision-gate starter kit: gate a documentation workflow with typed decisions.",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "test": "node --test",
+    "gates": "node bin/gate.mjs --list",
+    "gate": "node bin/gate.mjs",
+    "check": "node bin/check.mjs",
+    "escalate": "node bin/escalate.mjs",
+    "queue": "node bin/queue.mjs",
+    "pipeline": "node bin/pipeline.mjs",
+    "calibrate": "node bin/calibrate.mjs"
+  }
+}

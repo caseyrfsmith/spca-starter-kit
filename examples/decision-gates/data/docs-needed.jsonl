@@ -1,0 +1,6 @@
+{"id":"dn-01","expected":"pass","state":{"change":{"title":"Add a --format=csv flag to the export command","description":"The CLI gains a new public flag. The export command's documentation does not mention formats."}}}
+{"id":"dn-02","expected":"stop","state":{"change":{"title":"Rename an internal helper function","description":"A private function in the parser was renamed. No public behavior changes."}}}
+{"id":"dn-03","expected":"escalate","state":{"change":{"title":"Bump a transitive dependency","description":"Bump left-pad from 1.2.3 to 1.2.4 in the lockfile."}}}
+{"id":"dn-04","expected":"pass","state":{"change":{"title":"Move the Save button on the settings page","description":"The primary action moves to the top-right corner of the settings page."}}}
+{"id":"dn-05","expected":"stop","state":{"change":{"title":"Fix a typo in a code comment","description":"Corrected 'recieve' to 'receive' in a source comment."}}}
+{"id":"dn-06","expected":"pass","state":{"change":{"title":"Change the default request timeout from 30s to 10s","description":"The default timeout for the public API client changes."}}}

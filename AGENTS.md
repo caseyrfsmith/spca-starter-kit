@@ -13,6 +13,7 @@ Read README.md and examples/README.md, then apply the example that matches the u
 | Check page shapes against templates | vale/docshape.ini, vale/styles/DocShape and vale/styles/config/scripts | Lint examples/page-shapes/recipe-pass.md and recipe-missing-check.md with that config |
 | Try edit-time agent feedback | README.md agent sections and example hook settings | First test the underlying validator; then verify dispatch in the actual agent runtime |
 | Adapt other guide patterns | examples/snippets/ and snippets.json | Read the source/context and implement the product-specific pieces before executing them |
+| Run the decision gates on tickets and drafts | examples/decision-gates/README.md and TUNING.md | npm test and the CLIs inside examples/decision-gates; a live run needs a provider key |
 
 ## Apply and verify
 

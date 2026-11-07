@@ -4,7 +4,7 @@ Standalone tools and examples from SPCA, maintained independently of the SPCA we
 
 **Status: Editorial draft.** Review before adopting; see VERIFICATION.md for tested scope and limitations.
 
-**Purpose:** Templates, prose and page-shape checks, optional agent hooks, and tactical-guide examples to adapt to your workflow. Start with the examples index to choose between runnable examples and illustrative snippets. It does **not** connect to Linear, require Shoalrun, or use model APIs.
+**Purpose:** Templates, prose and page-shape checks, optional agent hooks, decision gates, and tactical-guide examples to adapt to your workflow. Start with the examples index to choose between runnable examples and illustrative snippets. It does **not** connect to Linear or require Shoalrun. The decision-gates example uses a model API only when you supply a provider key and an evaluated dataset; the rest of the kit does not use model APIs.
 
 ## Use it with an agent
 
@@ -63,9 +63,9 @@ Review `.claude/settings.example.json` and `.claude/check-ticket-hook.py`. Copy 
 
 ## What this kit intentionally does not do
 
-- No automatic ticket submission, MCP integration, external API access, or secret handling.
+- No automatic ticket submission or MCP integration. The decision-gates example is an optional, provider-neutral adapter that reads a provider key from the environment and never stores credentials.
 - No pretend fixture factory or fake sandbox responses.
-- No probabilistic decision-model integration without an evaluated dataset.
+- The decision-gates example ships a labeled dataset and a calibration harness; no probabilistic decision-model integration is included without one.
 - No claim that a simple regex can assess whether acceptance criteria are meaningful.
 
 ## Further inspiration
@@ -121,4 +121,4 @@ python3 tools/check_vale.py
 python3 scripts/package.py
 ```
 
-Optional JavaScript dependencies and tests are documented in examples/tactical/README.md. Packaging writes dist/spca-starter-kit.zip and a SHA-256 file. It excludes activated agent settings, working drafts, mock receipts, caches and installed dependencies. No website checkout or model API is required.
+Optional JavaScript dependencies and tests are documented in examples/tactical/README.md. Packaging writes dist/spca-starter-kit.zip and a SHA-256 file. It excludes activated agent settings, working drafts, mock receipts, caches and installed dependencies. No website checkout is required, and no model API is used unless you run the decision-gates example with your own key.

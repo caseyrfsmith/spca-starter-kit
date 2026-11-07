@@ -1,0 +1,6 @@
+{"id":"an-01","expected":"pass","state":{"question":"How do I rotate an API key?","context":"Rotating an API key: open Settings, select the key, choose Rotate, and copy the new value. The old key stops working immediately."}}
+{"id":"an-02","expected":"escalate","state":{"question":"Does the free plan include audit logs?","context":"Pricing plans: Free, Pro, and Enterprise. The comparison covers seats, storage, and support response times."}}
+{"id":"an-03","expected":"pass","state":{"question":"What is the default request timeout?","context":"The client sends each request with a default timeout of 30 seconds, configurable per call."}}
+{"id":"an-04","expected":"escalate","state":{"question":"How do I export a report to Excel?","context":"Reports can be exported to CSV or PDF from the report menu."}}
+{"id":"an-05","expected":"pass","state":{"question":"Which header carries the API version?","context":"Every request must include the X-Api-Version header. Supported values are 2024-01 and 2024-06."}}
+{"id":"an-06","expected":"escalate","state":{"question":"Why did my build fail yesterday?","context":"Builds run on every push. A failed build blocks the merge until it is fixed."}}

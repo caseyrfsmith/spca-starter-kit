@@ -1,0 +1,6 @@
+{"id":"cg-01","expected":"pass","state":{"draft":"The scheduler retries a failed job up to three times.","source":"Retry policy: a failed job is retried up to three times before it is marked failed."}}
+{"id":"cg-02","expected":"revise","state":{"draft":"The API accepts a priority parameter to reorder the queue.","source":"The API reference lists limit and cursor as query parameters. There is no priority parameter."}}
+{"id":"cg-03","expected":"escalate","state":{"draft":"Deleting a project also deletes its archived issues.","source":"Deleting a project removes its issues from the active list. Archived items are covered by a retention policy that is not included here."}}
+{"id":"cg-04","expected":"pass","state":{"draft":"Password reset emails expire after one hour.","source":"Reset links are valid for 60 minutes."}}
+{"id":"cg-05","expected":"revise","state":{"draft":"The dashboard loads in under 200ms for every workspace.","source":"Performance figures vary by workspace size. No universal load-time guarantee is documented."}}
+{"id":"cg-06","expected":"escalate","state":{"draft":"CSV export includes all custom fields.","source":"Export options are described in the export guide, which is not provided."}}

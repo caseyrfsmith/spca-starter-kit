@@ -1,0 +1,8 @@
+{
+  "title": "Add CSV export to the reports page",
+  "description": "Finance exports report data every Monday and currently copies rows by hand.",
+  "acceptanceCriteria": [
+    "Clicking Export downloads a CSV containing every currently visible row.",
+    "The CSV includes a header row and opens without errors in a spreadsheet."
+  ]
+}
