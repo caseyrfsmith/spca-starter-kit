@@ -35,7 +35,7 @@ export const defaultPolicy = {
 export const gatePolicies = {
   'docs-needed': {
     ...defaultPolicy,
-    stop: { disposition: 'drop', label: 'gate-not-needed', state: null, openPullRequest: false },
+    stop: { disposition: 'drop', label: 'docs-not-needed', state: null, openPullRequest: false },
   },
 };
 

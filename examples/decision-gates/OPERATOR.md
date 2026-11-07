@@ -73,7 +73,7 @@ never carries two contradictory decisions (for example `gate-review` and
 benign outcome: `docs-needed` answers `not_required → stop`, so its terminal case
 is "no documentation work", not "send it to a person". Per-gate overrides live in
 `gatePolicies` in `src/operator.mjs`; `policyForGate('docs-needed')` maps that
-`stop` to a `drop` disposition and a `gate-not-needed` label. Add an override the
+`stop` to a `drop` disposition and a `docs-not-needed` label. Add an override the
 same way when a route means something different for a gate.
 
 A pull request is opened **only** when the route authorizes it. Running

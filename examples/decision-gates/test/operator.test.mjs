@@ -72,7 +72,7 @@ test('the brief clears the policy labels it is not applying', () => {
 test('docs-needed maps its terminal stop to a drop, not a review', () => {
   const brief = planBrief({ result: { ...passResult, route: 'stop' }, policy: policyForGate('docs-needed') });
   assert.equal(brief.disposition, 'drop');
-  assert.equal(brief.actions.label, 'gate-not-needed');
+  assert.equal(brief.actions.label, 'docs-not-needed');
   assert.equal(brief.actions.openPullRequest, false);
   assert.match(brief.next, /No documentation work required/);
 });
