@@ -101,7 +101,11 @@ Live providers read `OPENROUTER_API_KEY` from the environment and never write it
 to disk. Note the data egress: the provider receives the whole `state` — that is,
 the ticket or draft text — so whatever you gate leaves your machine and reaches
 the endpoint you configure. Do not gate material you are not permitted to send
-there. Two request shapes are included:
+there. `--base-url` changes that endpoint, so the key and the whole ticket text
+go wherever you point it; a base URL must be `https` (plain `http` is accepted
+only for loopback). A local `.env` in this directory is ignored by git and
+excluded from the packaged kit, so it stays on your machine. Two request shapes
+are included:
 
 ```sh
 # A Decisions API that returns typed answers directly (TypeSafe Jev and similar)

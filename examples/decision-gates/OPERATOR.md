@@ -41,7 +41,7 @@ there is one), the comment to post, and the actions the route authorizes.
 SLO-10  Publish the decision gate starter kit and Reflex Arc pages
   route        pass  →  proceed
   gate         testable-criteria v0.3  (decisions / typesafe/jev-1.14)
-  choice       observable  (confidence 0.97)
+  choice       observable  (confidence 1.00)
   reason       criteria describe observable outcomes
   actions      label: gate-passed  ·  state: In Progress  ·  pull request: yes
   next         Continue to a pull request; a person still signs off.

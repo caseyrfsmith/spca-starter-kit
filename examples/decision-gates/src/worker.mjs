@@ -14,6 +14,8 @@
 //   worker       Any OpenAI-shaped chat endpoint. The model is asked for a JSON
 //                diagnosis, which this module validates before returning.
 
+import { requireHttpsBaseUrl } from './provider.mjs';
+
 const DEFAULT_WORKER_BASE = 'https://openrouter.ai/api/v1';
 
 export const WORKER_SYSTEM_PROMPT = [
@@ -80,6 +82,7 @@ export function stubWorker(fixture) {
 export function workerProvider({ baseUrl = DEFAULT_WORKER_BASE, apiKey, model, fetchImpl = fetch } = {}) {
   if (!apiKey) throw new Error('workerProvider needs an apiKey');
   if (!model) throw new Error('workerProvider needs a model');
+  requireHttpsBaseUrl(baseUrl, 'worker base URL');
   return {
     name: 'worker',
     model,

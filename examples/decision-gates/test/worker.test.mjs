@@ -53,6 +53,11 @@ test('workerProvider requires a key and a model', () => {
   assert.throws(() => workerProvider({ apiKey: 'k' }), /model/);
 });
 
+test('workerProvider refuses a non-https base URL', () => {
+  const fetchImpl = async () => ({ ok: true, json: async () => ({}) });
+  assert.throws(() => workerProvider({ apiKey: 'k', model: 'm', baseUrl: 'http://api.example.com', fetchImpl }), /must be https/);
+});
+
 test('formatDiagnosis renders a Markdown comment with the route and sections', () => {
   const md = formatDiagnosis(
     { summary: 'Too vague to verify.', vague: ['feels faster'], missing: ['a target'], suggested: ['loads in under 2s'] },

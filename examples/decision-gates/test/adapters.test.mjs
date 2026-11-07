@@ -24,6 +24,14 @@ test('gitPlan refuses an incomplete plan', () => {
   assert.throws(() => gitPlan({ branch: 'b', paths: ['a'], message: 'm' }), /title/);
 });
 
+test('gitPlan rejects a branch or base name that could be read as an option', () => {
+  for (const branch of ['--exec=evil', '-x', 'has space', 'slo;rm', 'a$(id)', '']) {
+    assert.throws(() => gitPlan({ branch, paths: ['a'], message: 'm', title: 't' }), /branch/, branch);
+  }
+  assert.throws(() => gitPlan({ branch: 'b', base: '--exec=evil', paths: ['a'], message: 'm', title: 't' }), /base branch/);
+  assert.ok(gitPlan({ branch: 'slo-10/fix-1', base: 'release/1.2', paths: ['a'], message: 'm', title: 't' }));
+});
+
 test('the git adapter executes the plan in order', async () => {
   const seen = [];
   const adapter = createGitAdapter({ run: (step) => { seen.push(formatCommand(step)); return { status: 0, stdout: '', stderr: '' }; } });

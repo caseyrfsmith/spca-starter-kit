@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeAnswers, stubProvider, openAiProvider, decisionsProvider } from '../src/provider.mjs';
+import { normalizeAnswers, stubProvider, openAiProvider, decisionsProvider, requireHttpsBaseUrl } from '../src/provider.mjs';
 
 const QUESTIONS = {
   supported: { type: 'noul' },
@@ -100,4 +100,18 @@ test('decisionsProvider surfaces an HTTP error', async () => {
 test('live providers refuse to construct without a key', () => {
   assert.throws(() => openAiProvider({ model: 'm' }), /apiKey/);
   assert.throws(() => decisionsProvider({}), /apiKey/);
+});
+
+test('a base URL must be https, except loopback http', () => {
+  assert.equal(requireHttpsBaseUrl('https://api.example.com/v1'), 'https://api.example.com/v1');
+  assert.equal(requireHttpsBaseUrl('http://localhost:8080/v1'), 'http://localhost:8080/v1');
+  assert.equal(requireHttpsBaseUrl('http://127.0.0.1:3000'), 'http://127.0.0.1:3000');
+  assert.throws(() => requireHttpsBaseUrl('http://api.example.com/v1'), /must be https/);
+  assert.throws(() => requireHttpsBaseUrl('not a url'), /not a valid URL/);
+});
+
+test('the live providers refuse a non-https base URL', () => {
+  const fetchImpl = async () => ({ ok: true, json: async () => ({}) });
+  assert.throws(() => openAiProvider({ apiKey: 'k', model: 'm', baseUrl: 'http://api.example.com', fetchImpl }), /must be https/);
+  assert.throws(() => decisionsProvider({ apiKey: 'k', baseUrl: 'http://api.example.com', fetchImpl }), /must be https/);
 });

@@ -29,6 +29,22 @@ function clamp01(value) {
   return Math.max(0, Math.min(1, value));
 }
 
+// A base URL must be https. The key is sent as a bearer token to that URL, so a
+// plain-http base URL would put the key and the whole ticket text on the wire.
+// Loopback http is allowed so a local dev server still works.
+export function requireHttpsBaseUrl(baseUrl, label = 'base URL') {
+  let url;
+  try {
+    url = new URL(baseUrl);
+  } catch {
+    throw new Error(`${label} is not a valid URL: ${baseUrl}`);
+  }
+  if (url.protocol === 'https:') return baseUrl;
+  const loopback = url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname === '::1';
+  if (url.protocol === 'http:' && loopback) return baseUrl;
+  throw new Error(`${label} must be https (plain http is allowed only for loopback): ${baseUrl}`);
+}
+
 // A confidence, when supplied, must be a real number in [0, 1]. A missing
 // confidence stays null and is treated as "not confident" by the router, so a
 // provider that omits it cannot silently auto-action a pass or a revise.
@@ -86,6 +102,7 @@ export function stubProvider(fixtures) {
 export function openAiProvider({ baseUrl = DEFAULT_OPENAI_BASE, apiKey, model, fetchImpl = fetch } = {}) {
   if (!apiKey) throw new Error('openAiProvider needs an apiKey');
   if (!model) throw new Error('openAiProvider needs a model');
+  requireHttpsBaseUrl(baseUrl, 'openai base URL');
   return {
     name: 'openai',
     model,
@@ -119,6 +136,7 @@ export function openAiProvider({ baseUrl = DEFAULT_OPENAI_BASE, apiKey, model, f
 
 export function decisionsProvider({ baseUrl = DEFAULT_DECISIONS_BASE, apiKey, model = 'typesafe/jev-1.14', fetchImpl = fetch } = {}) {
   if (!apiKey) throw new Error('decisionsProvider needs an apiKey');
+  requireHttpsBaseUrl(baseUrl, 'decisions base URL');
   return {
     name: 'decisions',
     model,

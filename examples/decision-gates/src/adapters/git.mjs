@@ -10,11 +10,23 @@ import { spawnSync } from 'node:child_process';
 
 // Build the ordered command plan for a pull request. Pure: no I/O, so it can be
 // printed before anything runs.
+//
+// Branch and base names are validated against git's own ref-name rules, so a
+// name like `--exec=evil` cannot be read as an option by `git` or `gh`.
+const BRANCH_NAME = /^[A-Za-z0-9][A-Za-z0-9._/-]*$/;
+
+function requireBranchName(name, label) {
+  if (!name) throw new Error(`gitPlan needs a ${label}`);
+  if (!BRANCH_NAME.test(name)) throw new Error(`gitPlan has an invalid ${label}: ${name}`);
+  return name;
+}
+
 export function gitPlan({ branch, paths, message, title, body, base = 'main', remote = 'origin' } = {}) {
-  if (!branch) throw new Error('gitPlan needs a branch name');
+  requireBranchName(branch, 'branch name');
   if (!paths || paths.length === 0) throw new Error('gitPlan needs at least one path to commit');
   if (!message) throw new Error('gitPlan needs a commit message');
   if (!title) throw new Error('gitPlan needs a pull request title');
+  requireBranchName(base, 'base branch');
   return [
     { cmd: 'git', args: ['checkout', '-b', branch] },
     { cmd: 'git', args: ['add', '--', ...paths] },
