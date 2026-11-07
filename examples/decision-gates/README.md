@@ -188,8 +188,13 @@ node bin/operator.mjs run --ticket work/tickets/slo-10.json --ticket-id SLO-10 \
 `plan` writes nothing. `run` writes only when `--tracker` and `--pr` are given,
 and it opens a pull request only when the route authorizes one — a `revise`
 verdict refuses the PR rather than opening one the gate did not approve. Add
-`--dry-run` to print every step without running it. [OPERATOR.md](OPERATOR.md)
-covers the policy, the adapters and the keys.
+`--dry-run` to print every step without running it.
+
+The labels, states and the pull-request rule are **defaults you tune to your own
+tracker**, not a fixed contract; the mapping is one small table in
+`src/operator.mjs`, and the adapter creates a label the first time it needs one.
+[OPERATOR.md](OPERATOR.md) covers the policy, the per-gate overrides, the
+adapters and the keys.
 
 ## Calibrate
 

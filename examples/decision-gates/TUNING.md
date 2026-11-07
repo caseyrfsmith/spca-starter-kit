@@ -6,6 +6,11 @@ the question first — a good policy on a bad question still routes badly.
 The kit ships placeholder policies and small example datasets. They demonstrate
 the mechanism; they are not calibrated for your workflow.
 
+The same is true of the **operator loop's** route-to-label policy: the labels,
+states and pull-request rule in `src/operator.mjs` are defaults to tune to your
+own tracker. [OPERATOR.md](OPERATOR.md) covers that policy; this file is about
+tuning the gates themselves.
+
 ## 1. Fix the question before the bands
 
 The failure to watch for is **entanglement**: two judgments that always move

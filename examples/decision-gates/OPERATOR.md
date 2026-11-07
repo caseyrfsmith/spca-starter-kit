@@ -61,9 +61,14 @@ place the routing decision becomes a side effect.
 | `escalate` | review | `gate-needs-context` | — | no |
 | `stop` | stop | `gate-review` | — | no |
 
-Change the labels and states to match your tracker. The kit's tests check that
-every route in the vocabulary has a policy entry, so a new route cannot be added
-without also deciding what it does.
+**These names are defaults, not a contract — tune the policy to your tracker.**
+The whole route-to-action map is that one table, defined by `defaultPolicy` in
+`src/operator.mjs`. Rename any label, change any state, or flip the pull-request
+rule, and the loop follows it; the Linear adapter creates a label the first time
+it needs one, so a fresh workspace needs no setup. For a one-off, pass your own
+`policy` to `planBrief({ ..., policy })`. The kit's tests only check that every
+route has *an* entry — never that it matches these names — so a new route cannot
+be added without also deciding what it does.
 
 When a brief is applied it also **clears the policy's other labels**, so a ticket
 never carries two contradictory decisions (for example `gate-review` and
@@ -74,7 +79,8 @@ benign outcome: `docs-needed` answers `not_required → stop`, so its terminal c
 is "no documentation work", not "send it to a person". Per-gate overrides live in
 `gatePolicies` in `src/operator.mjs`; `policyForGate('docs-needed')` maps that
 `stop` to a `drop` disposition and a `docs-not-needed` label. Add an override the
-same way when a route means something different for a gate.
+same way when a route means something different for a gate. `docs-not-needed` is
+a good example of a name you may want to change: it is just a default.
 
 A pull request is opened **only** when the route authorizes it. Running
 `run --pr` on a `revise` verdict fails loudly instead of opening a PR that the
