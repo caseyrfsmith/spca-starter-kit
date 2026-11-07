@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ROUTES } from '../src/routing.mjs';
-import { defaultPolicy, planBrief, formatBrief, formatComment, canOpenPullRequest, policyCoversAllRoutes } from '../src/operator.mjs';
+import { defaultPolicy, planBrief, formatBrief, formatComment, canOpenPullRequest, policyCoversAllRoutes, policyForGate } from '../src/operator.mjs';
 
 const passResult = {
   gate: 'testable-criteria',
@@ -61,6 +61,26 @@ test('a stop does not authorize a pull request', () => {
   const brief = planBrief({ result: { ...passResult, route: 'stop' } });
   assert.equal(brief.disposition, 'stop');
   assert.equal(brief.actions.openPullRequest, false);
+});
+
+test('the brief clears the policy labels it is not applying', () => {
+  const brief = planBrief({ id: 'x', ticket: {}, result: passResult });
+  assert.equal(brief.actions.label, 'gate-passed');
+  assert.deepEqual(brief.actions.removeLabels.sort(), ['gate-needs-context', 'gate-needs-criteria', 'gate-review']);
+});
+
+test('docs-needed maps its terminal stop to a drop, not a review', () => {
+  const brief = planBrief({ result: { ...passResult, route: 'stop' }, policy: policyForGate('docs-needed') });
+  assert.equal(brief.disposition, 'drop');
+  assert.equal(brief.actions.label, 'gate-not-needed');
+  assert.equal(brief.actions.openPullRequest, false);
+  assert.match(brief.next, /No documentation work required/);
+});
+
+test('other gates keep the default stop as a stop', () => {
+  const brief = planBrief({ result: { ...passResult, route: 'stop' }, policy: policyForGate('testable-criteria') });
+  assert.equal(brief.disposition, 'stop');
+  assert.equal(brief.actions.label, 'gate-review');
 });
 
 test('a pass comment is generated deterministically from the result', () => {

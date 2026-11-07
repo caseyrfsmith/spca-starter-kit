@@ -42,6 +42,27 @@ test('operator run --pr needs a branch, paths and title', () => {
   assert.match(result.stderr, /needs --branch, --paths and --pr-title/);
 });
 
+test('operator --demo drives a non-pass route offline', () => {
+  const result = run(['plan', '--ticket', 'tickets/example-ticket.json', '--demo', '{"failureMode":{"choice":"vague","confidence":0.9}}', '--json']);
+  assert.equal(result.status, 0);
+  const brief = JSON.parse(result.stdout);
+  assert.equal(brief.route, 'revise');
+  assert.equal(brief.actions.openPullRequest, false);
+  assert.ok(brief.diagnosis, 'a revise verdict is diagnosed');
+});
+
+test('operator run refuses a pull request the route does not authorize', () => {
+  const result = run(['run', '--ticket', 'tickets/example-ticket.json', '--demo', '{"failureMode":{"choice":"vague","confidence":0.9}}', '--pr', '--branch', 'x', '--paths', 'README.md', '--pr-title', 'T']);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /does not authorize a pull request/);
+});
+
+test('operator run --dry-run previews the tracker attachment too', () => {
+  const result = run(['run', '--ticket', 'tickets/example-ticket.json', '--pr', '--repo', '.', '--branch', 'b', '--paths', 'README.md', '--pr-title', 'T', '--tracker', 'linear', '--dry-run']);
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /would attach \(the new pull request\) to/);
+});
+
 test('operator --help exits zero and prints usage', () => {
   const result = run(['--help']);
   assert.equal(result.status, 0);

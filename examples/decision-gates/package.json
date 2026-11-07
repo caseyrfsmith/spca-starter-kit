@@ -16,6 +16,7 @@
     "queue": "node bin/queue.mjs",
     "operator": "node bin/operator.mjs",
     "pipeline": "node bin/pipeline.mjs",
-    "calibrate": "node bin/calibrate.mjs"
+    "calibrate": "node bin/calibrate.mjs",
+    "test:live": "node bin/live-linear.mjs"
   }
 }

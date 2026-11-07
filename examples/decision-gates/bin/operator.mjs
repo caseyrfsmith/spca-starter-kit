@@ -24,7 +24,7 @@ import { getGate } from '../src/gates/index.mjs';
 import { stubProvider, decisionsProvider, openAiProvider } from '../src/provider.mjs';
 import { stubWorker, workerProvider } from '../src/worker.mjs';
 import { runEscalation } from '../src/escalate.mjs';
-import { planBrief, formatBrief, canOpenPullRequest } from '../src/operator.mjs';
+import { planBrief, formatBrief, canOpenPullRequest, policyForGate } from '../src/operator.mjs';
 import { gitPlan, formatCommand, createGitAdapter } from '../src/adapters/git.mjs';
 
 const HELP = `Usage: node bin/operator.mjs <plan|run> --ticket <file.json> [options]
@@ -38,6 +38,7 @@ Decision:
   --ticket <file.json>     the ticket; passed to the gate as { "ticket": ... }
   --ticket-id <id>         tracker id to use (default: the ticket filename)
   --provider               stub (offline demo), decisions, openai
+  --demo <json>            override the stub answers (offline testing)
   --model <id>             decision model
   --worker                 stub (offline demo) or openai
   --worker-model <id>      worker model (default: openai/gpt-4o-mini)
@@ -83,7 +84,12 @@ function makeProvider(args) {
   const gate = getGate(args.gate ?? 'testable-criteria');
   const name = args.provider ?? 'stub';
   const apiKey = process.env.OPENROUTER_API_KEY;
-  if (name === 'stub') return { gate, provider: stubProvider(gate.demo ?? {}) };
+  if (name === 'stub') {
+    // `--demo` overrides the stub answers, so a non-pass route can be exercised
+    // offline (for example to see the pull-request refusal).
+    const fixture = args.demo ? JSON.parse(args.demo) : (gate.demo ?? {});
+    return { gate, provider: stubProvider(fixture) };
+  }
   if (name === 'decisions') return { gate, provider: decisionsProvider({ apiKey, model: args.model, baseUrl: args['base-url'] }) };
   if (name === 'openai') return { gate, provider: openAiProvider({ apiKey, model: args.model ?? 'openai/gpt-4o-mini', baseUrl: args['base-url'] }) };
   throw new Error(`unknown provider: ${name}`);
@@ -107,7 +113,7 @@ async function openPullRequest(args, brief) {
   });
   if (args['dry-run']) {
     for (const step of plan) console.log(`  would run: ${formatCommand(step)}`);
-    return null;
+    return '(the new pull request)';
   }
   const adapter = createGitAdapter({ cwd: args.repo });
   const results = await adapter.execute(plan);
@@ -149,7 +155,7 @@ async function main() {
   const ticketId = args['ticket-id'] ?? basename(args.ticket, '.json');
 
   const result = await runEscalation({ gate, provider, worker, state: { ticket } });
-  const brief = planBrief({ id: ticketId, ticket, result });
+  const brief = planBrief({ id: ticketId, ticket, result, policy: policyForGate(gate.id) });
 
   if (args.json) console.log(JSON.stringify(brief, null, 2));
   else console.log(formatBrief(brief));

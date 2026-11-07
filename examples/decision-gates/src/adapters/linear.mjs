@@ -5,11 +5,13 @@
 // this file is loaded only when `--tracker linear` is passed. It reads the key
 // the caller supplies and never writes it anywhere.
 //
-// Honesty about the boundary: the GraphQL calls below are exercised against a
-// mock in the tests, not against a live workspace. Verify the live request and
-// response shapes and the label/state names against your own Linear account
-// before relying on the write-back. The kit's core decision path does not
-// depend on this file.
+// Verification: the request and response shapes are checked against a mock in
+// the offline tests, and the write-back was verified once against a real Linear
+// workspace on 2026-11-07 (`bin/live-linear.mjs`, read-only against one ticket
+// and label/state/comment/attachment against a scratch ticket). Confirm the
+// shapes and the label and state names against your own account before relying
+// on it in production. The kit's core decision path does not depend on this
+// file.
 
 const ENDPOINT = 'https://api.linear.app/graphql';
 
@@ -89,7 +91,14 @@ export function createLinearAdapter({ apiKey, endpoint = ENDPOINT, fetchImpl = f
 
   async function createLabel(name, teamId) {
     const data = await gql(LABEL_MUTATION, { input: { name, teamId, color: LABEL_COLOR } });
-    return data.issueLabelCreate.issueLabel;
+    const payload = data?.issueLabelCreate;
+    if (!payload?.success || !payload.issueLabel) throw new Error(`linear could not create label "${name}"`);
+    return payload.issueLabel;
+  }
+
+  function findLabel(ticket, name) {
+    const wanted = String(name).toLowerCase();
+    return (ticket.teamLabels ?? []).find((label) => label.name.toLowerCase() === wanted) ?? null;
   }
 
   function findState(ticket, name) {
@@ -97,15 +106,35 @@ export function createLinearAdapter({ apiKey, endpoint = ENDPOINT, fetchImpl = f
     return (ticket.states ?? []).find((state) => state.name.toLowerCase() === wanted) ?? null;
   }
 
-  // Apply a brief: resolve (or create) the label, move the state, and post the
-  // comment. Resolving first keeps the write-back idempotent in effect: the
-  // label is added, never duplicated.
+  // Apply a brief: resolve (or create) the label, clear the policy's other
+  // labels, move the state, and post the comment. Resolving first keeps the
+  // write-back idempotent in effect, and clearing the others means a ticket
+  // never carries two contradictory decision labels.
   async function applyBrief(ticket, brief) {
-    const labelName = brief.actions.label;
-    let label = (ticket.teamLabels ?? []).find((candidate) => candidate.name === labelName);
-    if (!label) label = await createLabel(labelName, ticket.team.id);
+    const input = {};
+    let appliedLabel = null;
+    if (brief.actions.label) {
+      let label = findLabel(ticket, brief.actions.label);
+      if (!label) label = await createLabel(brief.actions.label, ticket.team.id);
+      input.addedLabelIds = [label.id];
+      appliedLabel = label.name;
+    }
 
-    const input = { addedLabelIds: [label.id] };
+    // Only remove labels the ticket actually carries: Linear rejects a removal
+    // for a label that is not on the issue ("Label not on issue").
+    const onTicket = new Set((ticket.labels ?? []).map((name) => name.toLowerCase()));
+    const removed = [];
+    const removedIds = [];
+    for (const name of brief.actions.removeLabels ?? []) {
+      if (!onTicket.has(String(name).toLowerCase())) continue;
+      const label = findLabel(ticket, name);
+      if (label) {
+        removedIds.push(label.id);
+        removed.push(label.name);
+      }
+    }
+    if (removedIds.length) input.removedLabelIds = removedIds;
+
     if (brief.actions.state) {
       const state = findState(ticket, brief.actions.state);
       if (!state) throw new Error(`linear state "${brief.actions.state}" not found on team ${ticket.team.key}`);
@@ -113,12 +142,17 @@ export function createLinearAdapter({ apiKey, endpoint = ENDPOINT, fetchImpl = f
     }
 
     const updated = await gql(UPDATE_MUTATION, { id: ticket.id, input });
+    if (!updated?.issueUpdate?.success) throw new Error(`linear did not apply the update to ${ticket.identifier ?? ticket.id}`);
+
     const commented = await gql(COMMENT_MUTATION, { input: { issueId: ticket.id, body: brief.comment } });
+    if (!commented?.commentCreate?.success) throw new Error(`linear did not post the comment on ${ticket.identifier ?? ticket.id}`);
+
     return {
       id: ticket.id,
-      label: label.name,
+      label: appliedLabel,
       state: brief.actions.state ?? null,
-      updated: Boolean(updated.issueUpdate.success),
+      removed,
+      updated: true,
       commentUrl: commented.commentCreate.comment?.url ?? null,
     };
   }
@@ -126,7 +160,9 @@ export function createLinearAdapter({ apiKey, endpoint = ENDPOINT, fetchImpl = f
   // Attach a link (typically a pull request) to the ticket.
   async function attachLink(ticket, { url, title }) {
     const data = await gql(ATTACH_MUTATION, { input: { issueId: ticket.id, title: title ?? url, url } });
-    return data.attachmentCreate.attachment;
+    const payload = data?.attachmentCreate;
+    if (!payload?.success || !payload.attachment) throw new Error(`linear could not attach "${url}"`);
+    return payload.attachment;
   }
 
   return { name: 'linear', getTicket, applyBrief, attachLink };

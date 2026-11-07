@@ -223,9 +223,9 @@ Keep deterministic checks — schemas, links, exact values — in ordinary code
 before any semantic gate (CM-009). A model judgment supports a scoped decision;
 it does not prove facts or authorize actions.
 
-## Using a ticket tracker (Linear, by MCP)
+## Using a ticket tracker
 
-This kit deliberately contains no tracker client. In an agent session that has a
+There are two ways to connect a tracker. In an agent session that has a
 **Linear MCP server** configured, the agent fetches the ticket and pipes it in:
 
 1. Read the ticket through the tracker's MCP server (title, description,
@@ -243,8 +243,9 @@ the Linear API, and `--pr` opens the pull request. That adapter is optional and
 off by default; [OPERATOR.md](OPERATOR.md) records what it does and its current
 limitations.
 
-The tracker connection lives in the agent, not here. Keep the retrieved ticket
-and the model's answers as a record, and never commit a key.
+The MCP connection lives in the agent; the Linear adapter reads its own key from
+the environment. Keep the retrieved ticket and the model's answers as a record,
+and never commit a key.
 
 ## Limitations
 
@@ -252,11 +253,12 @@ and the model's answers as a record, and never commit a key.
   prove the work is worthwhile or that it should exist.
 - A model's confidence is not a calibrated probability until you measure it on
   your own examples.
-- The stub proves wiring only. Do not read its verdict as a judgement.
+- The stub proves wiring only. Do not read its verdict as a judgment.
 - Several questions from one model, or from similar models, can share a failure
   mode. Inspect the results.
 - Deterministic conditions belong in ordinary code and should run before a gate.
 - Human review remains necessary for disputed criteria and consequential actions.
-- The Linear adapter's GraphQL is exercised against a mock in the tests, not a
-  live workspace. Verify the request shapes and the label and state names
-  against your own account before relying on the write-back.
+- The Linear adapter's GraphQL is checked against a mock in the offline tests and
+  was verified once against a real workspace on 2026-11-07 (`bin/live-linear.mjs`).
+  Re-run that read-only check, then `--apply` on a scratch ticket, before relying
+  on the write-back in your own account.

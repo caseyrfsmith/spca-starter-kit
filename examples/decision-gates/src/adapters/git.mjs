@@ -24,11 +24,19 @@ export function gitPlan({ branch, paths, message, title, body, base = 'main', re
   ];
 }
 
-// Render a step as a copy-pasteable command. Arguments containing whitespace
-// are quoted so the printed plan can be run by hand.
+// Quote one argument so the printed plan is safe to paste into a POSIX shell.
+// Single quotes neutralize `$()`, backticks and backslashes; a literal single
+// quote becomes the standard '\'' sequence. (Execution itself never uses a
+// shell — this only protects the human who copies the plan.)
+function shellQuote(value) {
+  const text = String(value);
+  if (text.length > 0 && /^[A-Za-z0-9_./:=@%+,-]+$/.test(text)) return text;
+  return `'${text.replace(/'/g, `'\\''`)}'`;
+}
+
+// Render a step as a command that is safe to copy and paste.
 export function formatCommand(step) {
-  const parts = [step.cmd, ...(step.args ?? []).map((arg) => (/\s|"/.test(arg) ? JSON.stringify(arg) : arg))];
-  return parts.join(' ');
+  return [step.cmd, ...(step.args ?? []).map(shellQuote)].join(' ');
 }
 
 // The default runner: a synchronous spawn that captures output. Kept separate

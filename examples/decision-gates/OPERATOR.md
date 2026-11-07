@@ -28,6 +28,10 @@ node bin/operator.mjs run --ticket work/tickets/slo-10.json --ticket-id SLO-10 \
 enables the tracker write-back, `--pr` enables the pull request. Add `--dry-run`
 to print every step without performing any of them.
 
+To drive a non-pass route offline, `--demo '<json>'` overrides the stub answers,
+for example `--demo '{"failureMode":{"choice":"vague","confidence":0.9}}'` to see
+the `revise` brief and the pull-request refusal.
+
 ## The brief
 
 The loop's output is a **brief**: the route, the evidence, the diagnosis (when
@@ -56,11 +60,21 @@ place the routing decision becomes a side effect.
 | `revise` | revise | `gate-needs-criteria` | — | no |
 | `escalate` | review | `gate-needs-context` | — | no |
 | `stop` | stop | `gate-review` | — | no |
-| `review` | review | `gate-review` | — | no |
 
 Change the labels and states to match your tracker. The kit's tests check that
 every route in the vocabulary has a policy entry, so a new route cannot be added
 without also deciding what it does.
+
+When a brief is applied it also **clears the policy's other labels**, so a ticket
+never carries two contradictory decisions (for example `gate-review` and
+`gate-passed` at once).
+
+`stop` means "halt the workflow", not "this is bad". Some gates use it for a
+benign outcome: `docs-needed` answers `not_required → stop`, so its terminal case
+is "no documentation work", not "send it to a person". Per-gate overrides live in
+`gatePolicies` in `src/operator.mjs`; `policyForGate('docs-needed')` maps that
+`stop` to a `drop` disposition and a `gate-not-needed` label. Add an override the
+same way when a route means something different for a gate.
 
 A pull request is opened **only** when the route authorizes it. Running
 `run --pr` on a `revise` verdict fails loudly instead of opening a PR that the
@@ -85,15 +99,19 @@ nothing.
 ### `linear` — tracker write-back
 
 Loaded only with `--tracker linear`. It reads the ticket, resolves (or creates)
-the policy label, moves the state, posts the decision comment, and attaches the
-pull-request links. It reads `LINEAR_API_KEY` from the environment and never
-writes it anywhere.
+the policy label, clears the other decision labels, moves the state, posts the
+decision comment, and attaches the pull-request links. It reads `LINEAR_API_KEY`
+from the environment and never writes it anywhere.
 
-> **Before you rely on the write-back:** the GraphQL in
-> `src/adapters/linear.mjs` is exercised against a mock in the tests, not
-> against a live workspace. Confirm the request shapes and the label and state
-> names against your own Linear account first. The core decision path does not
-> depend on this adapter.
+The request and response shapes are checked against a mock in the offline tests,
+and the whole write-back was verified once against a real workspace on
+2026-11-07 with `bin/live-linear.mjs`. Re-run that against your own account
+before relying on it:
+
+```sh
+LINEAR_API_KEY=... node bin/live-linear.mjs --issue <ticket>          # read-only
+LINEAR_API_KEY=... node bin/live-linear.mjs --issue <ticket> --apply  # write-back
+```
 
 ## Keys
 
@@ -111,6 +129,11 @@ decision and the pull-request links as a comment, and opened a PR in each
 repository. The website's
 [Decision gate starter kit](https://slopcontrol.org/starter-kit/decision-gates)
 page shows the resulting ticket and write-back.
+
+That run's write-back was an agent using the Linear MCP server. The adapter path
+was verified separately on 2026-11-07: `bin/live-linear.mjs` read SLO-10 (auth,
+the query and the label/state resolution) and, with `--apply`, applied the label,
+state, comment and an attachment to a scratch ticket, then read them back.
 
 ## Boundaries
 

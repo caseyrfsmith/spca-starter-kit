@@ -40,8 +40,14 @@ test('the git adapter stops at the first failing step', async () => {
   assert.equal(calls, 1);
 });
 
-test('formatCommand quotes arguments containing whitespace', () => {
-  assert.equal(formatCommand({ cmd: 'git', args: ['commit', '-m', 'two words'] }), 'git commit -m "two words"');
+test('formatCommand quotes arguments containing whitespace with single quotes', () => {
+  assert.equal(formatCommand({ cmd: 'git', args: ['commit', '-m', 'two words'] }), "git commit -m 'two words'");
+  assert.equal(formatCommand({ cmd: 'git', args: ['add', '--', "it's.md"] }), "git add -- 'it'\\''s.md'");
+});
+
+test('formatCommand neutralizes shell substitutions in a pasted plan', () => {
+  assert.equal(formatCommand({ cmd: 'git', args: ['add', '--', 'a$(id).md'] }), "git add -- 'a$(id).md'");
+  assert.equal(formatCommand({ cmd: 'gh', args: ['pr', 'create', '--body', 'call `id`'] }), "gh pr create --body 'call `id`'");
 });
 
 // ---- Linear --------------------------------------------------------------
@@ -160,4 +166,82 @@ test('the linear adapter reports a non-OK HTTP response', async () => {
   const fetchImpl = async () => ({ ok: false, status: 401, json: async () => ({}) });
   const linear = createLinearAdapter({ apiKey: 'k', fetchImpl });
   await assert.rejects(() => linear.getTicket('x'), /HTTP 401/);
+});
+
+test('the linear adapter clears the policy labels it is not applying', async () => {
+  const { fetchImpl, calls } = mockFetch((body) => {
+    if (body.query.includes('issueUpdate')) return { issueUpdate: { success: true, issue: { id: 'uuid-1' } } };
+    if (body.query.includes('commentCreate')) return { commentCreate: { success: true, comment: { id: 'c1', url: 'u' } } };
+    throw new Error('unexpected');
+  });
+  const linear = createLinearAdapter({ apiKey: 'k', fetchImpl });
+  const ticket = { id: 'uuid-1', identifier: 'SLO-1', team: { id: 't1', key: 'SLO' }, states: [], labels: ['gate-review'], teamLabels: [{ id: 'l1', name: 'gate-passed' }, { id: 'l2', name: 'gate-review' }, { id: 'l3', name: 'gate-needs-context' }] };
+  const brief = { comment: 'x', actions: { label: 'gate-passed', state: null, removeLabels: ['gate-review', 'gate-needs-context'] } };
+  const applied = await linear.applyBrief(ticket, brief);
+  const update = calls.find((call) => call.query.includes('issueUpdate'));
+  // Only the label the ticket actually carries is removed.
+  assert.deepEqual(update.variables.input, { addedLabelIds: ['l1'], removedLabelIds: ['l2'] });
+  assert.deepEqual(applied.removed, ['gate-review']);
+});
+
+test('the linear adapter removes nothing when the ticket has no conflicting label', async () => {
+  const { fetchImpl, calls } = mockFetch((body) => {
+    if (body.query.includes('issueUpdate')) return { issueUpdate: { success: true, issue: { id: 'uuid-1' } } };
+    if (body.query.includes('commentCreate')) return { commentCreate: { success: true, comment: { id: 'c1', url: 'u' } } };
+    throw new Error('unexpected');
+  });
+  const linear = createLinearAdapter({ apiKey: 'k', fetchImpl });
+  const ticket = { id: 'uuid-1', identifier: 'SLO-1', team: { id: 't1', key: 'SLO' }, states: [], labels: [], teamLabels: [{ id: 'l1', name: 'gate-passed' }, { id: 'l2', name: 'gate-review' }] };
+  const applied = await linear.applyBrief(ticket, { comment: 'x', actions: { label: 'gate-passed', state: null, removeLabels: ['gate-review'] } });
+  const update = calls.find((call) => call.query.includes('issueUpdate'));
+  assert.deepEqual(update.variables.input, { addedLabelIds: ['l1'] });
+  assert.deepEqual(applied.removed, []);
+});
+
+test('the linear adapter matches a label case-insensitively and does not create a duplicate', async () => {
+  const { fetchImpl, calls } = mockFetch((body) => {
+    if (body.query.includes('issueLabelCreate')) throw new Error('should not create a label');
+    if (body.query.includes('issueUpdate')) return { issueUpdate: { success: true, issue: { id: 'uuid-1' } } };
+    if (body.query.includes('commentCreate')) return { commentCreate: { success: true, comment: { id: 'c1', url: 'u' } } };
+    throw new Error('unexpected');
+  });
+  const linear = createLinearAdapter({ apiKey: 'k', fetchImpl });
+  const ticket = { id: 'uuid-1', identifier: 'SLO-1', team: { id: 't1', key: 'SLO' }, states: [], teamLabels: [{ id: 'l1', name: 'Gate-Passed' }] };
+  const applied = await linear.applyBrief(ticket, { comment: 'x', actions: { label: 'gate-passed', state: null } });
+  assert.equal(applied.label, 'Gate-Passed');
+  assert.equal(calls.some((call) => call.query.includes('issueLabelCreate')), false);
+});
+
+test('the linear adapter fails loudly when the update is not applied', async () => {
+  const { fetchImpl } = mockFetch((body) => {
+    if (body.query.includes('issueUpdate')) return { issueUpdate: { success: false, issue: null } };
+    throw new Error('unexpected');
+  });
+  const linear = createLinearAdapter({ apiKey: 'k', fetchImpl });
+  const ticket = { id: 'uuid-1', identifier: 'SLO-1', team: { id: 't1', key: 'SLO' }, states: [], teamLabels: [{ id: 'l1', name: 'gate-passed' }] };
+  await assert.rejects(() => linear.applyBrief(ticket, { comment: 'x', actions: { label: 'gate-passed', state: null } }), /did not apply/);
+});
+
+test('the linear adapter fails loudly when the label cannot be created', async () => {
+  const { fetchImpl } = mockFetch(() => ({ issueLabelCreate: { success: false, issueLabel: null } }));
+  const linear = createLinearAdapter({ apiKey: 'k', fetchImpl });
+  const ticket = { id: 'uuid-1', identifier: 'SLO-1', team: { id: 't1', key: 'SLO' }, states: [], teamLabels: [] };
+  await assert.rejects(() => linear.applyBrief(ticket, { comment: 'x', actions: { label: 'gate-new', state: null } }), /could not create label/);
+});
+
+test('the linear adapter fails loudly when the comment is not posted', async () => {
+  const { fetchImpl } = mockFetch((body) => {
+    if (body.query.includes('issueUpdate')) return { issueUpdate: { success: true, issue: { id: 'uuid-1' } } };
+    if (body.query.includes('commentCreate')) return { commentCreate: { success: false, comment: null } };
+    throw new Error('unexpected');
+  });
+  const linear = createLinearAdapter({ apiKey: 'k', fetchImpl });
+  const ticket = { id: 'uuid-1', identifier: 'SLO-1', team: { id: 't1', key: 'SLO' }, states: [], teamLabels: [{ id: 'l1', name: 'gate-passed' }] };
+  await assert.rejects(() => linear.applyBrief(ticket, { comment: 'x', actions: { label: 'gate-passed', state: null } }), /did not post the comment/);
+});
+
+test('the linear adapter fails loudly when the attachment is not created', async () => {
+  const { fetchImpl } = mockFetch(() => ({ attachmentCreate: { success: false, attachment: null } }));
+  const linear = createLinearAdapter({ apiKey: 'k', fetchImpl });
+  await assert.rejects(() => linear.attachLink({ id: 'uuid-1' }, { url: 'u', title: 't' }), /could not attach/);
 });
