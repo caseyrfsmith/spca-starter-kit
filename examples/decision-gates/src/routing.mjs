@@ -19,9 +19,13 @@ export function combine(routes) {
 
 // An unsure pass or revise becomes an escalate, so nothing uncertain is
 // auto-actioned. stop and escalate pass through unchanged.
+//
+// A missing or non-numeric confidence is treated as zero, not one: an unknown
+// value must not read as "fully confident" and auto-action the route.
 export function withConfidence(route, confidence, reviewBelow) {
   if (reviewBelow === undefined) return route;
-  if ((route === 'pass' || route === 'revise') && (confidence ?? 1) < reviewBelow) return 'escalate';
+  const value = typeof confidence === 'number' && Number.isFinite(confidence) ? confidence : 0;
+  if ((route === 'pass' || route === 'revise') && value < reviewBelow) return 'escalate';
   return route;
 }
 

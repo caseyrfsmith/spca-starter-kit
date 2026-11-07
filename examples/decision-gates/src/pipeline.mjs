@@ -20,6 +20,10 @@ export async function runCascade(provider, state, gates = verifyCascade) {
 }
 
 // Run deterministic checks, then (only if they pass) the gates.
+//
+// `checks` defaults to none so this helper can be called with gates alone, but
+// the ordering only holds when you supply your checks. The CLI and the tests
+// pass them explicitly; do the same in a real workflow.
 export async function runPipeline(provider, state, { checks = [], gates = verifyCascade } = {}) {
   const checked = runChecks(checks, state);
   if (checked.route !== 'pass') {

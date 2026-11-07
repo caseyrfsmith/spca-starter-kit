@@ -5,6 +5,18 @@
 // else is handed to a person or a search rather than guessed. Run it before a
 // model is allowed to answer, so an unanswerable question becomes a handoff, not
 // a hallucination.
+//
+// By default the gate is binary: pass or escalate. Setting `reviseAt` opts into
+// a three-band route via `routeBand`, for workflows that want a clearly
+// unrelated context sent back to the author instead of to a person.
+
+import { routeBand } from '../routing.mjs';
+
+const REASONS = {
+  pass: 'the question is answerable from the context',
+  revise: 'the context is related but does not answer the question',
+  escalate: 'not answerable from the context; hand it to a person or a search',
+};
 
 export const answerable = {
   id: 'answerable',
@@ -29,9 +41,12 @@ export const answerable = {
   },
   decide(answers) {
     const probability = answers.answerable.probability;
-    if (probability >= this.policy.passAt) {
-      return { route: 'pass', probability, reason: 'the question is answerable from the context' };
+    const { passAt, reviseAt } = this.policy;
+    if (reviseAt !== undefined) {
+      const route = routeBand(probability, { passAt, reviseAt });
+      return { route, probability, reason: REASONS[route] };
     }
-    return { route: 'escalate', probability, reason: 'not answerable from the context; hand it to a person or a search' };
+    const route = probability >= passAt ? 'pass' : 'escalate';
+    return { route, probability, reason: REASONS[route] };
   },
 };

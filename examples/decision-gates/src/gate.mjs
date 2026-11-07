@@ -43,8 +43,12 @@ export function evaluate(rows) {
     const expected = row.expected;
     if (!ROUTES.includes(expected)) throw new Error(`unknown expected route "${expected}" for ${row.id}`);
     if (got === expected) correct += 1;
+    // A false approval is a bad artifact let through; a false rejection is a
+    // good artifact blocked. "Blocked" covers every non-pass route, so a good
+    // artifact sent to escalate or stop counts too and never vanishes from the
+    // numbers the thresholds are chosen from.
     if (got === 'pass' && expected !== 'pass') falseApprovals += 1;
-    if (got === 'revise' && expected === 'pass') falseRejections += 1;
+    if (expected === 'pass' && got !== 'pass') falseRejections += 1;
     details.push({ id: row.id, expected, got, decision: row.result.choice ?? row.result.probability ?? null });
   }
   return { total: rows.length, correct, falseApprovals, falseRejections, details };

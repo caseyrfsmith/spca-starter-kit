@@ -48,7 +48,14 @@ test('routeChoice maps criteria to routes and applies the review band', () => {
   assert.equal(routeChoice({ choice: 'bug', confidence: 0.9 }, routes, 0.6), 'pass');
   assert.equal(routeChoice({ choice: 'bug', confidence: 0.2 }, routes, 0.6), 'escalate');
   assert.equal(routeChoice({ choice: 'copy', confidence: 0.9 }, routes, 0.6), 'revise');
-  assert.equal(routeChoice({ choice: 'copy', confidence: undefined }, routes, 0.6), 'revise');
+});
+
+test('a missing or non-numeric confidence does not auto-action the route', () => {
+  const routes = { bug: 'pass', copy: 'revise' };
+  assert.equal(routeChoice({ choice: 'bug' }, routes, 0.6), 'escalate');
+  assert.equal(routeChoice({ choice: 'bug', confidence: null }, routes, 0.6), 'escalate');
+  assert.equal(routeChoice({ choice: 'copy', confidence: undefined }, routes, 0.6), 'escalate');
+  assert.equal(routeChoice({ choice: 'copy', confidence: 'high' }, routes, 0.6), 'escalate');
 });
 
 test('routeChoice rejects an unmapped criterion', () => {

@@ -6,7 +6,7 @@ import { runGate, runGates, evaluate } from '../src/gate.mjs';
 import { ROUTES } from '../src/routing.mjs';
 import { gates, getGate, listGates } from '../src/gates/index.mjs';
 import { stubWorker } from '../src/worker.mjs';
-import { runEscalation } from '../src/escalate.mjs';
+import { runEscalation, DIAGNOSE_ROUTES } from '../src/escalate.mjs';
 
 // Build stub answers that should make `gate` return `route`, or null if the
 // gate cannot express that route. This lets the dataset be checked against the
@@ -151,6 +151,44 @@ test('evaluate rejects an unknown expected route', () => {
   assert.throws(() => evaluate([{ id: 'x', expected: 'maybe', result: { route: 'pass' } }]), /unknown expected route/);
 });
 
+test('evaluate counts a blocked pass (escalate or stop) as a false rejection', () => {
+  const metrics = evaluate([
+    { id: 'a', expected: 'pass', result: { route: 'escalate' } },
+    { id: 'b', expected: 'pass', result: { route: 'stop' } },
+    { id: 'c', expected: 'pass', result: { route: 'pass' } },
+    { id: 'd', expected: 'revise', result: { route: 'pass' } },
+  ]);
+  assert.equal(metrics.falseRejections, 2);
+  assert.equal(metrics.falseApprovals, 1);
+  assert.equal(metrics.correct, 1);
+});
+
+test('every choice criterion produces a reason', async () => {
+  for (const gate of gates) {
+    for (const [id, question] of Object.entries(gate.questions)) {
+      if (question.type !== 'choice') continue;
+      for (const key of Object.keys(question.criteria)) {
+        const result = await runGate(gate, stubProvider({ [id]: { choice: key, confidence: 1 } }), {});
+        assert.equal(typeof result.reason, 'string', `${gate.id}/${id}/${key} has no reason`);
+        assert.ok(result.reason.length > 0, `${gate.id}/${id}/${key} has an empty reason`);
+      }
+    }
+  }
+});
+
+test('the diagnose set is a subset of the route vocabulary', () => {
+  assert.deepEqual(DIAGNOSE_ROUTES.filter((route) => !ROUTES.includes(route)), []);
+});
+
+test('answerable is binary by default and opts into a revise band only when reviseAt is set', async () => {
+  const gate = getGate('answerable');
+  assert.equal((await runGate(gate, stubProvider({ answerable: { probability: 0.2 } }), {})).route, 'escalate');
+  const banded = { ...gate, policy: { passAt: 0.8, reviseAt: 0.4 } };
+  assert.equal(banded.decide({ answerable: { probability: 0.9 } }).route, 'pass');
+  assert.equal(banded.decide({ answerable: { probability: 0.6 } }).route, 'escalate');
+  assert.equal(banded.decide({ answerable: { probability: 0.2 } }).route, 'revise');
+});
+
 test('every gate ships an escalation fixture that is diagnosed offline', async () => {
   for (const gate of gates) {
     assert.ok(gate.escalation?.decision, `${gate.id} escalation decision`);
@@ -161,7 +199,7 @@ test('every gate ships an escalation fixture that is diagnosed offline', async (
       worker: stubWorker(gate.escalation.diagnosis),
       state: {},
     });
-    assert.ok(['revise', 'escalate', 'review'].includes(result.route), `${gate.id} escalation route "${result.route}"`);
+    assert.ok(['revise', 'escalate'].includes(result.route), `${gate.id} escalation route "${result.route}"`);
     assert.equal(result.escalated, true, `${gate.id} should escalate`);
     assert.ok(result.diagnosis.summary.length > 0, `${gate.id} diagnosis summary`);
   }

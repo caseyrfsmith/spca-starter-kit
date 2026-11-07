@@ -29,6 +29,17 @@ function clamp01(value) {
   return Math.max(0, Math.min(1, value));
 }
 
+// A confidence, when supplied, must be a real number in [0, 1]. A missing
+// confidence stays null and is treated as "not confident" by the router, so a
+// provider that omits it cannot silently auto-action a pass or a revise.
+function normalizeConfidence(value, id) {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== 'number' || Number.isNaN(value) || value < 0 || value > 1) {
+    throw new Error(`answer "${id}" has an invalid confidence`);
+  }
+  return value;
+}
+
 // Validate a raw answer object against the question set and return the
 // normalized shape used by the routing code.
 export function normalizeAnswers(raw, questions) {
@@ -49,12 +60,12 @@ export function normalizeAnswers(raw, questions) {
       if (options.length && !options.includes(answer.choice)) {
         throw new Error(`answer "${id}" is not one of: ${options.join(', ')}`);
       }
-      out[id] = { type: 'choice', choice: answer.choice, confidence: answer.confidence ?? null };
+      out[id] = { type: 'choice', choice: answer.choice, confidence: normalizeConfidence(answer.confidence, id) };
     } else if (question.type === 'score') {
       if (typeof answer.score !== 'number' || Number.isNaN(answer.score)) {
         throw new Error(`answer "${id}" is not a score`);
       }
-      out[id] = { type: 'score', score: answer.score, confidence: answer.confidence ?? null };
+      out[id] = { type: 'score', score: answer.score, confidence: normalizeConfidence(answer.confidence, id) };
     } else {
       throw new Error(`unknown question type "${question.type}" for "${id}"`);
     }

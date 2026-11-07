@@ -15,8 +15,12 @@ const args = { requiredHeadings: [] };
 let file = null;
 for (let i = 0; i < argv.length; i += 1) {
   if (argv[i] === '--help') args.help = true;
-  else if (argv[i] === '--require') args.requiredHeadings.push(argv[(i += 1)]);
-  else if (!argv[i].startsWith('--')) file = argv[i];
+  else if (argv[i] === '--require') {
+    const heading = argv[i + 1];
+    if (heading === undefined || heading.startsWith('--')) throw new Error('--require needs a heading');
+    args.requiredHeadings.push(heading);
+    i += 1;
+  } else if (!argv[i].startsWith('--')) file = argv[i];
 }
 
 if (args.help || !file) {

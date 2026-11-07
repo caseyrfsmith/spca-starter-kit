@@ -66,8 +66,10 @@ unrepresentative sample is not calibration.
 
 - **Choice gates:** the `routes` map is the policy; `reviewBelow` controls what
   is auto-actioned.
-- **Noul gates:** `passAt` and `reviseAt` set the bands. Widening the middle
-  sends more cases to a person.
+- **Noul gates:** `passAt` is the first band. `answerable` is binary by default
+  (pass or escalate); set `reviseAt` to add a revise band via `routeBand`, so a
+  clearly unrelated context goes back to the author instead of to a person.
+  Widening the middle band sends more cases to a person.
 
 ## 4. Tune the confidence band
 
@@ -77,6 +79,8 @@ auto-actioned. Confidence is a measure of how concentrated the model's answer is
 
 - Lower it to auto-action more; raise it to escalate more.
 - Set it so the auto-act band's error rate is one you can live with.
+- A missing or non-numeric confidence is treated as zero, not as confident, so a
+  provider that omits it cannot silently auto-action a route.
 
 ## 5. Re-tune when the world changes
 

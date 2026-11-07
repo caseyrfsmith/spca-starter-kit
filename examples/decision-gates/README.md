@@ -30,8 +30,12 @@ Requires Node.js 22.12 or later. No dependencies are installed.
 | `bin/calibrate.mjs` | Score a gate against its labeled dataset. |
 | `bin/check.mjs` | Run the deterministic checks over a file (offline). |
 | `bin/escalate.mjs` | Run a gate and diagnose a non-pass verdict. |
+| `src/operator.mjs` | The operator brief: route to label, state and pull-request plan. |
+| `src/adapters/` | Optional side effects: `git` (branch and PR) and `linear` (write-back). |
+| `bin/operator.mjs` | The operator loop: decide a ticket, then apply the brief. |
 | `data/*.jsonl` | One labeled dataset per gate. |
 | `TUNING.md` | How to tune a gate: the question first, then the policy. |
+| `OPERATOR.md` | The operator loop: the brief, the policy and the adapters. |
 | `test/` | Offline tests. No network, no key. |
 
 ## Quick start
@@ -77,7 +81,9 @@ when they pass (`runPipeline`). A failed check returns immediately with
 
 `testable-criteria`, `docs-needed` and `claim-grounded` are reason-based Choices.
 `answerable` is a Noul — a single clear proposition, where the probability itself
-carries the uncertainty.
+carries the uncertainty. It is binary by default (pass or escalate); set
+`reviseAt` in its policy to add a revise band via `routeBand`, so a clearly
+unrelated context goes back to the author instead of to a person.
 
 Each gate lives in `src/gates/<id>.mjs` and is registered in
 `src/gates/index.mjs`.
@@ -92,7 +98,10 @@ escalate (`reviewBelow`), so nothing uncertain is auto-actioned.
 ## Providers (bring your own key)
 
 Live providers read `OPENROUTER_API_KEY` from the environment and never write it
-to disk. Two request shapes are included:
+to disk. Note the data egress: the provider receives the whole `state` — that is,
+the ticket or draft text — so whatever you gate leaves your machine and reaches
+the endpoint you configure. Do not gate material you are not permitted to send
+there. Two request shapes are included:
 
 ```sh
 # A Decisions API that returns typed answers directly (TypeSafe Jev and similar)
@@ -142,8 +151,9 @@ OPENROUTER_API_KEY=... node bin/escalate.mjs \
   --worker openai --worker-model openai/gpt-4o-mini
 ```
 
-The diagnoser runs on `revise`, `escalate` and `review` — every non-pass route —
-by default. The route in the output is always the gate's. This is the
+The diagnoser runs on `revise` and `escalate` by default — the routes where
+feedback helps; `stop` is terminal and is not diagnosed. The route in the output
+is always the gate's. This is the
 "route-then-write" pattern: the gate routes, the worker writes. That is why a
 `revise` verdict comes back with the exact phrase to fix, and an `escalate`
 verdict with the material that is missing.
@@ -158,6 +168,28 @@ node bin/escalate.mjs --gate testable-criteria --ticket ticket.json --comment-on
 The kit does not post the comment; the surrounding agent or workflow does. The
 gate stays authoritative throughout — the comment explains a decision, it does
 not make one.
+
+## The operator loop
+
+The gates decide; the **operator loop** turns the decision into the label, the
+state, the comment and the pull request. `bin/operator.mjs` prints a **brief**
+and, when you ask it to, applies it:
+
+```sh
+# Decide a ticket (offline with the stub).
+node bin/operator.mjs plan --ticket work/tickets/slo-10.json
+
+# Decide, write back to the tracker, and open a pull request.
+node bin/operator.mjs run --ticket work/tickets/slo-10.json --ticket-id SLO-10 \
+  --tracker linear --pr --repo ../.. --branch slo-10 \
+  --paths content/a.mdx --pr-title "Publish the pages"
+```
+
+`plan` writes nothing. `run` writes only when `--tracker` and `--pr` are given,
+and it opens a pull request only when the route authorizes one — a `revise`
+verdict refuses the PR rather than opening one the gate did not approve. Add
+`--dry-run` to print every step without running it. [OPERATOR.md](OPERATOR.md)
+covers the policy, the adapters and the keys.
 
 ## Calibrate
 
@@ -205,6 +237,12 @@ This kit deliberately contains no tracker client. In an agent session that has a
    stop — and write the result back (a label or a comment) so the decision lives
    where the work lives.
 
+The same loop can also run without an agent. `bin/operator.mjs run --tracker
+linear` reads the ticket and writes the label, state and comment back through
+the Linear API, and `--pr` opens the pull request. That adapter is optional and
+off by default; [OPERATOR.md](OPERATOR.md) records what it does and its current
+limitations.
+
 The tracker connection lives in the agent, not here. Keep the retrieved ticket
 and the model's answers as a record, and never commit a key.
 
@@ -219,3 +257,6 @@ and the model's answers as a record, and never commit a key.
   mode. Inspect the results.
 - Deterministic conditions belong in ordinary code and should run before a gate.
 - Human review remains necessary for disputed criteria and consequential actions.
+- The Linear adapter's GraphQL is exercised against a mock in the tests, not a
+  live workspace. Verify the request shapes and the label and state names
+  against your own account before relying on the write-back.

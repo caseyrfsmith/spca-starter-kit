@@ -58,6 +58,14 @@ Claude Code 2.1.312 again exited 1 with `authentication_failed` / Not logged in 
 
 The parent SPCA repository contains exact invocation records, agent events, hook audit and an opt-in reproduction script under `editorial/hook-verification/`. These logs use illustrative local ticket fixtures, not real product evidence. No hooks were activated in the maintained toolkit or SPCA project.
 
+## Decision-gates example and operator loop — 2026-11-07
+
+Added `examples/decision-gates/`: four typed decision gates, a deterministic-then-gates pipeline, a diagnoser, a calibration harness, and an operator loop. The JavaScript suite in that directory passes 110 tests offline (`cd examples/decision-gates && npm test`), with no network and no key. The tests use injected providers, a mock `fetch` for the Linear adapter and an injected runner for the git adapter.
+
+- The Linear adapter (`src/adapters/linear.mjs`) and the git/`gh` adapter (`src/adapters/git.mjs`) are **mock-tested only**: the GraphQL request and response shapes, and the `gh` command plan, are checked, not a live Linear workspace or a real repository push. The git command plan is exercised through `--dry-run`.
+- Pre-merge review fixes applied: `evaluate` counts a blocked `pass` (`escalate`/`stop`) as a false rejection; a missing or non-numeric confidence is treated as zero, not as confident, and an out-of-range confidence is rejected; `answerable` implements the documented `reviseAt` band via `routeBand`; the phantom `review` route was removed from the diagnoser and the queue view; `--comment-only` and `--require` handle the non-pass and missing-value cases.
+- The operator loop was run once against a real Linear issue (SLO-10) with a live decision provider, opening a PR in each repository. That single run is an illustration, not a benchmark or a calibration result.
+
 ## Bundled guide examples
 
 The examples index now includes the optional standalone Node parser/mock adapter/Vale handler, the exact TG-002 rules and fixtures, licensed DocShape rule/scripts and page-shape fixtures, and a generated catalog of guide/reference code blocks. The original Python workflow and mock-only submission boundary are unchanged. The original Vale configuration, TG-002 configuration and DocShape configuration are deliberately separate. Run tools/check_vale.py for all three; see examples/README.md. Snippet collection does not make illustrative provider or fixture commands executable, or establish live agent hook dispatch.

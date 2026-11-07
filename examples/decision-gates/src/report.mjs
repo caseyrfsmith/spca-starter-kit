@@ -4,9 +4,9 @@
 // attention, why, and what to do next. This module turns gate results (and
 // their diagnoses) into that list.
 
-const ACTION_ROUTES = ['escalate', 'stop', 'revise', 'review'];
+const ACTION_ROUTES = ['escalate', 'stop', 'revise'];
 
-const SEVERITY = { escalate: 0, stop: 1, revise: 2, review: 3, pass: 4 };
+const SEVERITY = { escalate: 0, stop: 1, revise: 2, pass: 3 };
 
 function header(item) {
   const where = item.title ? `${item.id}  ${item.title}` : item.id;

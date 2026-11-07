@@ -36,6 +36,22 @@ test('normalizeAnswers rejects an off-menu choice', () => {
   );
 });
 
+test('normalizeAnswers rejects an invalid confidence', () => {
+  assert.throws(
+    () => normalizeAnswers({ supported: { noul: 0.5 }, kind: { choice: 'bug', confidence: 1.4 }, effort: { score: 1 } }, QUESTIONS),
+    /invalid confidence/,
+  );
+  assert.throws(
+    () => normalizeAnswers({ supported: { noul: 0.5 }, kind: { choice: 'bug', confidence: 'high' }, effort: { score: 1 } }, QUESTIONS),
+    /invalid confidence/,
+  );
+});
+
+test('normalizeAnswers keeps a missing confidence as null', () => {
+  const answers = normalizeAnswers({ supported: { noul: 0.5 }, kind: { choice: 'bug' }, effort: { score: 1 } }, QUESTIONS);
+  assert.equal(answers.kind.confidence, null);
+});
+
 test('normalizeAnswers rejects a non-numeric score', () => {
   assert.throws(
     () => normalizeAnswers({ supported: { noul: 0.5 }, kind: { choice: 'bug' }, effort: { score: 'big' } }, QUESTIONS),

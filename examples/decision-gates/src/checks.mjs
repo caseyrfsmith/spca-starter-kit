@@ -19,6 +19,10 @@ function escape(text) {
 
 // Example deterministic check: required headings are present and there are no
 // unresolved TODO markers. Illustrative only — do not treat it as a linter.
+//
+// The route describes the finding (here `revise`: something to fix). The block
+// itself is the pipeline's: `runPipeline` returns `blockedBy: "deterministic"`
+// and stops before any gate, regardless of the check's route.
 export function docShape({ markdown = '', requiredHeadings = [] } = {}) {
   const findings = [];
   for (const heading of requiredHeadings) {

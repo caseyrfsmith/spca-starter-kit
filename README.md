@@ -4,7 +4,7 @@ Standalone tools and examples from SPCA, maintained independently of the SPCA we
 
 **Status: Editorial draft.** Review before adopting; see VERIFICATION.md for tested scope and limitations.
 
-**Purpose:** Templates, prose and page-shape checks, optional agent hooks, decision gates, and tactical-guide examples to adapt to your workflow. Start with the examples index to choose between runnable examples and illustrative snippets. It does **not** connect to Linear or require Shoalrun. The decision-gates example uses a model API only when you supply a provider key and an evaluated dataset; the rest of the kit does not use model APIs.
+**Purpose:** Templates, prose and page-shape checks, optional agent hooks, decision gates, and tactical-guide examples to adapt to your workflow. Start with the examples index to choose between runnable examples and illustrative snippets. It does **not** connect to Linear or require Shoalrun. The decision-gates example uses a model API only when you supply a provider key and an evaluated dataset, and its optional operator loop writes back to a tracker and opens a pull request only when you pass the flags; the rest of the kit does not use model APIs.
 
 ## Use it with an agent
 
@@ -63,7 +63,7 @@ Review `.claude/settings.example.json` and `.claude/check-ticket-hook.py`. Copy 
 
 ## What this kit intentionally does not do
 
-- No automatic ticket submission or MCP integration. The decision-gates example is an optional, provider-neutral adapter that reads a provider key from the environment and never stores credentials.
+- No automatic ticket submission or MCP integration. The decision-gates example ships an optional, off-by-default operator loop that reads a provider key and, only when you pass `--tracker`/`--pr`, writes back through a tracker API and opens a pull request with `gh`; it never stores credentials. Its Linear and git adapters are mock-tested — verify them against your own account and repository before relying on them.
 - No pretend fixture factory or fake sandbox responses.
 - The decision-gates example ships a labeled dataset and a calibration harness; no probabilistic decision-model integration is included without one.
 - No claim that a simple regex can assess whether acceptance criteria are meaningful.

@@ -78,7 +78,7 @@ async function main() {
   const worker = makeWorker(args, gate);
   const result = await runEscalation({ gate, provider, worker, state });
   if (args['comment-only']) {
-    console.log(result.comment ?? '(the gate passed; no diagnosis)');
+    console.log(result.comment ?? `(no diagnosis for route \`${result.route}\`)`);
     return 0;
   }
   console.log(JSON.stringify(result, null, 2));

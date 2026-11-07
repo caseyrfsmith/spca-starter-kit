@@ -39,8 +39,8 @@ test('the diagnosis never changes the gate route', async () => {
   assert.equal(result.escalated, true);
 });
 
-test('the default diagnose set is every non-pass route', () => {
-  assert.deepEqual(DIAGNOSE_ROUTES, ['revise', 'escalate', 'review']);
+test('the default diagnose set is revise and escalate', () => {
+  assert.deepEqual(DIAGNOSE_ROUTES, ['revise', 'escalate']);
 });
 
 test('a custom route set can restrict diagnosis', async () => {
